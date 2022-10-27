@@ -66,20 +66,24 @@ func getCostFromCmdLine() int {
 }
 
 // Hash password
-func hashPassword(password []byte, cost int) (string, error) {
+func hashPassword(password []byte, cost int) ([]byte, error) {
 	// Hash password with Bcrypt's min cost
 	hashedPasswordBytes, err := bcrypt.
 		GenerateFromPassword(password, cost)
 
-	return string(hashedPasswordBytes), err
+	return hashedPasswordBytes, err
 }
 
-// Check if two passwords match using Bcrypt's CompareHashAndPassword
-// which return nil on success and an error on failure.
-func doPasswordsMatch(hashedPassword, currPassword string) bool {
+func doPasswordsMatch(hashedPassword, password string) bool {
 	err := bcrypt.CompareHashAndPassword(
-		[]byte(hashedPassword), []byte(currPassword))
+		[]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+func hashingCost(password []byte) (int, error) {
+	costInt, err := bcrypt.Cost(password)
+
+	return int(costInt), err
 }
 
 func main() {
@@ -87,17 +91,17 @@ func main() {
 	passwordBytes, password := getPasswordFromCmdLine()
 
 	// Input Cost
-	cost := getCostFromCmdLine()
+	setCost := getCostFromCmdLine()
 
 	// Hash password
-	hashedPassword, err := hashPassword(passwordBytes, cost)
+	hashedPassword, err := hashPassword(passwordBytes, setCost)
 	if err != nil {
 		return
 	}
 
-	fmt.Println("Password Hash:", hashedPassword)
+	fmt.Println("Password Hash:", string(hashedPassword))
 
 	// Check if passed password matches the original password
 	fmt.Println("Password Match:",
-		doPasswordsMatch(hashedPassword, password))
+		doPasswordsMatch(string(hashedPassword), password))
 }
